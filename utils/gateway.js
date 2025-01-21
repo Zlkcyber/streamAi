@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import WebSocket from 'ws';
 import log from './logger.js';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import { SocksProxyAgent } from 'socks-proxy-agent';
 
 class Task {
     constructor(taskid, method, url, headers, body, script, debug, timeout, gateway, proxy = null) {
@@ -18,7 +19,9 @@ class Task {
         };
 
         if (proxy) {
-            fetchOptions.agent = new HttpsProxyAgent(proxy);
+            fetchOptions.agent = proxy.type === 'socks5' 
+                ? new SocksProxyAgent(proxy.url)
+                : new HttpsProxyAgent(proxy.url);
         }
 
         if (body && method === "POST") {
@@ -91,7 +94,9 @@ class Gateway {
         this.wsOptions = {};
 
         if (this.proxy) {
-            this.wsOptions.agent = new HttpsProxyAgent(this.proxy);
+            this.wsOptions.agent = this.proxy.type === 'socks5'
+                ? new SocksProxyAgent(this.proxy.url)
+                : new HttpsProxyAgent(this.proxy.url);
         }
 
         this.ws = new WebSocket(`wss://${server}/connect`, this.wsOptions);

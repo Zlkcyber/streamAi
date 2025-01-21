@@ -1,4 +1,5 @@
 import fs from 'fs';
+import log from './logger.js';
 
 export function loadFile(filePath) {
     try {
@@ -18,10 +19,19 @@ export function loadProxies(filePath) {
         const proxies = fs.readFileSync(filePath, 'utf8')
             .split('\n')
             .map(line => line.trim())
-            .filter(line => line.length > 0);
+            .filter(line => line.length > 0)
+            .map(proxy => {
+                // Check if proxy is in SOCKS5 format (socks5://user:pass@host:port)
+                if (proxy.startsWith('socks5://')) {
+                    return { type: 'socks5', url: proxy };
+                }
+                // Default to HTTP/HTTPS proxy
+                return { type: 'http', url: proxy.startsWith('http') ? proxy : `http://${proxy}` };
+            });
         return proxies;
     } catch (error) {
         log.error(`Failed to read proxies running Without proxies...`);
+        return [];
     }
 }
 

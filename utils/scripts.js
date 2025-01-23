@@ -2,6 +2,8 @@ import fs from 'fs';
 import log from './logger.js';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { SocksProxyAgent } from 'socks-proxy-agent';
+import { v3: uuidv3 } from 'uuid';
+
 // Create an agent
 export const newAgent = (proxy = null) => {
     if (proxy) {
@@ -19,11 +21,14 @@ export const newAgent = (proxy = null) => {
 
 export function loadFile(filePath) {
     try {
-        const proxies = fs.readFileSync(filePath, 'utf8')
+        const data = fs.readFileSync(filePath, 'utf8')
             .split('\n')
             .map(line => line.trim())
             .filter(line => line.length > 0);
-        return proxies;
+        return data.map(_ => {
+            let [userId, proxyUrl] = _.split(',');
+            return { userId, proxyUrl };
+        });
     } catch (error) {
         log.error(`Failed to read file ${filePath}`);
         process.exit(0);
@@ -42,11 +47,7 @@ export function loadProxies(filePath) {
     }
 }
 
-export function generateDeviceId() {
-    const hexChars = '0123456789abcdef';
-    let deviceId = '';
-    for (let i = 0; i < 32; i++) {
-        deviceId += hexChars[Math.floor(Math.random() * hexChars.length)];
-    }
-    return deviceId;
+export function generateDeviceId(proxyUrl) {
+    // device id will stick to proxyUrl
+    return uuidv3(proxyUrl, uuidv3.DNS)
 }

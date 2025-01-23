@@ -5,7 +5,25 @@ import banner from './utils/banner.js';
 import fetch from 'node-fetch';
 import { newAgent } from './utils/scripts.js';
 
+// Consolidate headers
+const headers = {
+    "accept": "application/json, text/plain, */*",
+    "accept-language": "en-US,en;q=0.9,vi;q=0.8",
+    "content-type": "application/json",
+    "dnt": 1,
+    "origin": "chrome-extension://fgamijdhamopilihagheoalbifagafka/",
+    "referer": "chrome-extension://fgamijdhamopilihagheoalbifagafka/",
+    "priority": "u=1, i",
+    "sec-ch-ua": '"Not)A;Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "Windows",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-site",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+};
 
+//
 const PROXIES_FILE = 'proxies.txt'
 const USERS_FILE = 'userIds.txt'
 const SERVER = "gw0.streamapp365.com";
@@ -16,9 +34,7 @@ async function dispatch(dev, user, proxy) {
     try {
         const response = await fetch('https://dist.streamapp365.com/dispatch', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: headers,
             body: JSON.stringify({
                 dev,
                 user,
@@ -37,14 +53,13 @@ async function dispatch(dev, user, proxy) {
     }
 }
 
-async function setupGatewaysForUser(user) {
-    const proxies = loadProxies(PROXIES_FILE);
+async function setupGatewaysForUser(user, proxy) {
+
     const numberGateway = proxies.length > MAX_GATEWAYS ? MAX_GATEWAYS : proxies.length;
     const userGateways = [];
-    let proxyIndex = 0;
+
     for (let i = 0; i < numberGateway; i++) {
-        const proxy = proxies[proxyIndex];
-        proxyIndex = (proxyIndex + 1) % proxies.length;
+
         try {
             const deviceId = generateDeviceId();
             log.info(`Connecting to Gateway ${i + 1} for User ${user} using Device ID: ${deviceId} via Proxy: ${proxy}`);
@@ -68,7 +83,7 @@ async function main() {
         log.info("Setting up gateways for all users...");
 
         const results = await Promise.allSettled(
-            USERS.map((user) => setupGatewaysForUser(user))
+            USERS.map((user) => setupGatewaysForUser(user.userId, user.proxyUrl))
         );
 
         results.forEach((result, index) => {

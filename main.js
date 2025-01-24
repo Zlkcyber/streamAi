@@ -55,7 +55,7 @@ async function dispatch(dev, user, proxy) {
 
 async function setupGatewaysForUser(user, proxy) {
 
-    const numberGateway = proxies.length > MAX_GATEWAYS ? MAX_GATEWAYS : proxies.length;
+    const numberGateway = USERS.length > MAX_GATEWAYS ? MAX_GATEWAYS : USERS.length;
     const userGateways = [];
 
     for (let i = 0; i < numberGateway; i++) {
